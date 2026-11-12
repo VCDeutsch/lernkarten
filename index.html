@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Карточки</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- Меню уровней -->
+  <div class="menu">
+    <button class="menuBtn" data-level="a1a2">A1-A2</button>
+    <button class="menuBtn" data-level="b1b2">B1-B2</button>
+    <button class="menuBtn" data-level="c1c2">C1-C2</button>
+  </div>
+
+  <!-- Выпадающее меню топиков -->
+  <div class="dropdown-container" id="dropdown-container" style="display: none;">
+    <button class="dropdown-toggle" id="dropdown-toggle">
+      <span id="dropdown-btn-text">Темы уровня</span> 
+      <span class="dropdown-arrow">▼</span>
+    </button>
+    <div class="dropdown-menu" id="dropdown-menu">
+      <div class="topics-list" id="topics-list">
+        <!-- Сюда JavaScript автоматически добавит чекбоксы -->
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="divmain">
+      <!-- Сцена с карточкой и кнопками управления -->
+      <div class="scene">
+        <div class="card">
+          <div class="card-inner">
+            <!-- Лицевая -->
+            <div class="card-face card-front">
+              <!-- Тема карточки (отображается над словом) -->
+              <div class="card-topic" id="card-topic"></div>
+              <div class="content">
+                <div class="title-ru" id="ru-word">Мама</div>
+              </div>
+            </div>
+            <!-- Обратная -->
+            <div class="card-face card-back">
+              <div class="content">
+                <div class="title-de" id="de-word">die Mutter</div>
+                <hr>
+                <p class="sentence" id="sentence">Die Mutter hat den Rahmen gewaschen.</p>
+                <button id="play-sound">🎵</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="buttons">
+          <button id="prevBtn">Предыдущая</button>
+          <button id="nextBtn">Следующая</button>
+          <button id="randomBtn">Рандом</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Подключаем файлы с базами данных по уровням -->
+  <script src="a1a2.js"></script>
+  <script src="b1b2.js"></script>
+  <script src="c1c2.js"></script>
+  
+  <!-- Затем основную логику приложения -->
+  <script src="script.js"></script>
+</body>
+
+</html>
