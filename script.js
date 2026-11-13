@@ -3,34 +3,37 @@
 // ==========================================
 
 // --- Глобальные переменные состояния ---
-let db = {}; // Полная база данных (содержит оба направления)
-let levelCards = []; // Все карточки выбранного уровня и режима
-let currentCards = []; // Отфильтрованный массив карточек для показа
-let currentIndex = 0; // Индекс активной карточки
-let currentLevelKey = "a1a2"; // Текущий уровень ('a1a2', 'b1b2', 'c1c2')
-let currentDirection = "ru-de"; // Направление перевода: 'ru-de' или 'de-ru'
-let isPlaying = false; // Флаг воспроизведения (защита от наложения в Firefox)
+let db = {}; // Полная база данных (содержит оба направления перевода)
+let levelCards = []; // Все карточки выбранного уровня сложности и режима
+let currentCards = []; // Отфильтрованный массив карточек, доступный для показа пользователю
+let currentIndex = 0; // Индекс текущей активной карточки в массиве currentCards
+let currentLevelKey = "a1a2"; // Текущий выбранный уровень ('a1a2', 'b1b2', 'c1c2')
+let currentDirection = "ru-de"; // Текущее направление перевода: 'ru-de' или 'de-ru'
+let isPlaying = false; // Флаг активного воспроизведения (защита от наложения аудиодорожек в Firefox)
 
 // --- Ссылки на элементы интерфейса (DOM-элементы) ---
-const ruWord = document.getElementById("ru-word");
-const deWord = document.getElementById("de-word");
-const sentence = document.getElementById("sentence");
-const playBtn = document.getElementById("play-sound");
-const cardTopic = document.getElementById("card-topic");
-const menuButtons = document.querySelectorAll(".menuBtn");
-const dirButtons = document.querySelectorAll(".dirBtn");
+const ruWord = document.getElementById("ru-word"); // Текст на лицевой стороне карточки
+const deWord = document.getElementById("de-word"); // Основной перевод на обратной стороне карточки
+const sentence = document.getElementById("sentence"); // Блок с примером предложения и его переводом
+const playBtn = document.getElementById("play-sound"); // Кнопка воспроизведения звука (🎵)
+const cardTopic = document.getElementById("card-topic"); // Бейдж с названием темы на лицевой стороне
+const cardElement = document.querySelector(".card"); // Контейнер самой карточки (для отслеживания переворота)
+const menuButtons = document.querySelectorAll(".menuBtn"); // Кнопки выбора уровня сложности (A1-A2, B1-B2, C1-C2)
+const dirButtons = document.querySelectorAll(".dirBtn"); // Кнопки переключения направления перевода
 
-// Элементы выпадающего меню топиков
-const dropdownContainer = document.getElementById("dropdown-container");
-const dropdownToggle = document.getElementById("dropdown-toggle");
-const dropdownBtnText = document.getElementById("dropdown-btn-text");
-const topicsList = document.getElementById("topics-list");
+// Элементы выпадающего меню топиков (тем)
+const dropdownContainer = document.getElementById("dropdown-container"); // Главный контейнер выпадающего списка
+const dropdownToggle = document.getElementById("dropdown-toggle"); // Кнопка открытия/закрытия списка тем
+const dropdownBtnText = document.getElementById("dropdown-btn-text"); // Текст внутри кнопки списка тем
+const topicsList = document.getElementById("topics-list"); // Контейнер для генерации чекбоксов с темами
 
 /**
  * Инициализация приложения.
- * Собирает данные из 6 файлов (3 для ru-de и 3 для de-ru) и синхронизирует с localStorage.
+ * Собирает данные из 6 внешних JS-файлов (3 для ru-de и 3 для de-ru)
+ * и синхронизирует их с локальным хранилищем браузера (localStorage).
  */
 function initApp() {
+  // Формируем единый объект базы данных из глобальных переменных подключенных скриптов
   const assembledDatabase = {
     "ru-de": {
       a1a2: typeof databaseA1A2 !== "undefined" ? databaseA1A2 : [],
@@ -44,15 +47,18 @@ function initApp() {
     },
   };
 
+  // Получаем ранее сохраненную версию базы из localStorage
   const cachedData = localStorage.getItem("flashcards_db_v2");
+  // Преобразуем текущие данные из файлов в JSON-строку для сравнения
   const fileDataString = JSON.stringify(assembledDatabase);
 
-  // Проверяем, загрузились ли массивы из файлов
+  // Проверяем, удалось ли загрузить хотя бы один массив из подключенных файлов
   const hasData =
     assembledDatabase["ru-de"].a1a2.length > 0 ||
     assembledDatabase["de-ru"].a1a2.length > 0;
 
   if (hasData) {
+    // Если данные в файлах изменились по сравнению с кэшем, обновляем localStorage
     if (cachedData !== fileDataString) {
       console.log(
         "Обновление: файлы баз данных изменены. Обновляем localStorage...",
@@ -60,12 +66,15 @@ function initApp() {
       localStorage.setItem("flashcards_db_v2", fileDataString);
       db = assembledDatabase;
     } else {
+      // Если изменений нет, берем данные из кэша
       console.log("Данные актуальны, загружаем из кэша localStorage.");
       db = JSON.parse(cachedData);
     }
   } else if (cachedData) {
+    // Резервный вариант: если файлы не загрузились, используем кэш
     db = JSON.parse(cachedData);
   } else {
+    // Аварийная заглушка на случай полного отсутствия данных
     db = {
       "ru-de": {
         a1a2: [
@@ -94,51 +103,69 @@ function initApp() {
     };
   }
 
-  // Настройка открытия/закрытия выпадающего меню топиков
+  // Обработчик клика по кнопке открытия/закрытия выпадающего меню топиков
   dropdownToggle.addEventListener("click", (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Предотвращаем всплытие клика до document
     dropdownContainer.classList.toggle("open");
   });
 
+  // Закрытие выпадающего меню при клике в любую свободную область экрана
   document.addEventListener("click", () => {
     dropdownContainer.classList.remove("open");
   });
 
+  // Предотвращаем закрытие меню при клике внутри самого списка (например, по чекбоксам)
   dropdownContainer.addEventListener("click", (e) => {
     e.stopPropagation();
   });
 
-  // Загружаем стартовый уровень и направление
+  // ==========================================
+  // ОСТАНОВКА ЗВУКА ПРИ ПЕРЕВОРОТЕ КАРТОЧКИ
+  // ==========================================
+  if (cardElement) {
+    // Останавливаем синтезатор речи при наведении курсора на карточку (переворот на обратную сторону)
+    cardElement.addEventListener("mouseenter", () => {
+      stopSpeech();
+    });
+
+    // Останавливаем синтезатор речи при уводе курсора с карточки (возврат на лицевую сторону)
+    cardElement.addEventListener("mouseleave", () => {
+      stopSpeech();
+    });
+  }
+
+  // Загружаем стартовый уровень и направление по умолчанию
   loadLevel(currentLevelKey);
 }
 
 /**
- * Загружает карточки для текущего направления перевода и уровня сложности
+ * Загружает карточки для текущего направления перевода и уровня сложности.
  * @param {string} levelKey - Ключ уровня ('a1a2', 'b1b2', 'c1c2')
  */
 function loadLevel(levelKey) {
   currentLevelKey = levelKey;
   const dirData = db[currentDirection] || {};
   levelCards = dirData[currentLevelKey] || [];
-  currentCards = [...levelCards];
-  currentIndex = 0;
+  currentCards = [...levelCards]; // Копируем все карточки уровня в текущий рабочий массив
+  currentIndex = 0; // Сбрасываем индекс на первую карточку
 
-  dropdownContainer.classList.remove("open");
+  dropdownContainer.classList.remove("open"); // Закрываем список тем при смене уровня
 
-  updateActiveMenuButton(currentLevelKey);
-  updateActiveDirectionButton(currentDirection);
-  renderTopicsForLevel(levelCards);
-  updateDropdownButtonText();
-  updateCard(currentIndex);
+  updateActiveMenuButton(currentLevelKey); // Подсвечиваем активную кнопку уровня
+  updateActiveDirectionButton(currentDirection); // Подсвечиваем активную кнопку направления
+  renderTopicsForLevel(levelCards); // Генерируем чекбоксы тем для выбранного уровня
+  updateDropdownButtonText(); // Обновляем счетчик карточек на кнопке тем
+  updateCard(currentIndex); // Отрисовываем первую карточку
 }
 
 /**
- * Создает список чекбоксов с уникальными топиками текущего уровня
+ * Создает список чекбоксов с уникальными топиками (темами) для текущего уровня.
  * @param {Array} cards - Массив карточек текущего уровня
  */
 function renderTopicsForLevel(cards) {
-  topicsList.innerHTML = "";
+  topicsList.innerHTML = ""; // Очищаем старый список тем
 
+  // Собираем только уникальные непустые названия тем с помощью Set
   const uniqueTopics = new Set();
   cards.forEach((card) => {
     if (card.topic && card.topic.trim() !== "") {
@@ -146,6 +173,7 @@ function renderTopicsForLevel(cards) {
     }
   });
 
+  // Если у карточек этого уровня нет тем, скрываем выпадающее меню
   if (uniqueTopics.size === 0) {
     dropdownContainer.style.display = "none";
     return;
@@ -153,6 +181,7 @@ function renderTopicsForLevel(cards) {
 
   dropdownContainer.style.display = "block";
 
+  // Создаем DOM-элементы (label + input[type="checkbox"] + span) для каждой темы
   uniqueTopics.forEach((topicName) => {
     const label = document.createElement("label");
     label.className = "topic-item";
@@ -160,6 +189,7 @@ function renderTopicsForLevel(cards) {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.value = topicName;
+    // При изменении состояния любого чекбокса запускаем фильтрацию
     checkbox.addEventListener("change", applyTopicFilter);
 
     const span = document.createElement("span");
@@ -172,29 +202,33 @@ function renderTopicsForLevel(cards) {
 }
 
 /**
- * Фильтрует карточки по выбранным чекбоксам топиков
+ * Фильтрует массив отображаемых карточек в соответствии с выбранными чекбоксами топиков.
  */
 function applyTopicFilter() {
+  // Находим все отмеченные чекбоксы внутри списка тем
   const checkedBoxes = topicsList.querySelectorAll(
     'input[type="checkbox"]:checked',
   );
+  // Извлекаем их строковые значения в массив
   const selectedTopics = Array.from(checkedBoxes).map((cb) => cb.value);
 
+  // Если ни одна тема не выбрана, показываем все карточки уровня
   if (selectedTopics.length === 0) {
     currentCards = [...levelCards];
   } else {
+    // Иначе оставляем только те карточки, тема которых входит в список выбранных
     currentCards = levelCards.filter((card) => {
       return card.topic && selectedTopics.includes(card.topic.trim());
     });
   }
 
-  updateDropdownButtonText();
-  currentIndex = 0;
+  updateDropdownButtonText(); // Обновляем количество доступных карточек в тексте кнопки
+  currentIndex = 0; // Начинаем показ с первой отфильтрованной карточки
   updateCard(currentIndex);
 }
 
 /**
- * Обновляет текст на кнопке выпадающего списка в зависимости от режима языка
+ * Обновляет текст на кнопке выпадающего списка тем в зависимости от языка интерфейса и числа карточек.
  */
 function updateDropdownButtonText() {
   const label = currentDirection === "de-ru" ? "Themen" : "Темы уровня";
@@ -202,7 +236,8 @@ function updateDropdownButtonText() {
 }
 
 /**
- * Подсвечивает активную кнопку уровня (A1-A2, B1-B2, C1-C2)
+ * Подсвечивает активную кнопку уровня (A1-A2, B1-B2, C1-C2).
+ * @param {string} activeLevel - Ключ активного уровня
  */
 function updateActiveMenuButton(activeLevel) {
   menuButtons.forEach((btn) => {
@@ -214,7 +249,8 @@ function updateActiveMenuButton(activeLevel) {
 }
 
 /**
- * Подсвечивает активную кнопку направления перевода слева от карточки
+ * Подсвечивает активную кнопку направления перевода.
+ * @param {string} activeDir - Ключ активного направления ('ru-de' или 'de-ru')
  */
 function updateActiveDirectionButton(activeDir) {
   dirButtons.forEach((btn) => {
@@ -223,16 +259,16 @@ function updateActiveDirectionButton(activeDir) {
 }
 
 /**
- * Отрисовывает содержимое карточки на экране в зависимости от выбранного режима
+ * Отрисовывает содержимое карточки на экране в зависимости от выбранного режима перевода.
  * @param {number} index - Индекс карточки в массиве currentCards
  */
 function updateCard(index) {
-  stopSpeech();
+  stopSpeech(); // При переключении на новую карточку принудительно глушим старую озвучку
 
   if (!currentCards || currentCards.length === 0) return;
   const cardData = currentCards[index];
 
-  // Отображение топика
+  // Отображение бейджа топика на лицевой стороне
   if (cardData.topic && cardData.topic.trim() !== "") {
     cardTopic.textContent = cardData.topic;
     cardTopic.style.display = "inline-block";
@@ -242,33 +278,35 @@ function updateCard(index) {
   }
 
   if (currentDirection === "ru-de") {
-    // РЕЖИМ 1: vom Russischen ins Deutsche
+    // РЕЖИМ 1: С русского на немецкий (vom Russischen ins Deutsche)
     ruWord.textContent = cardData.ru;
 
+    // Если указано множественное число, выводим его под основным немецким словом
     if (cardData.plural && cardData.plural !== "-" && cardData.plural !== "—") {
       deWord.innerHTML = `${cardData.de} <br><span class="plural-text">pl: ${cardData.plural}</span>`;
     } else {
       deWord.innerHTML = cardData.de;
     }
 
+    // Выводим немецкое предложение и его русский перевод (если он есть)
     if (cardData.ruSentence) {
       sentence.innerHTML = `${cardData.sentence} <br><span style="font-size: 0.8em; opacity: 0.8;">${cardData.ruSentence}</span>`;
     } else {
       sentence.textContent = cardData.sentence;
     }
   } else {
-    // РЕЖИМ 2: vom Deutschen ins Russische (всё наоборот)
-    // Снаружи немецкое слово (и при наличии форма множественного числа)
+    // РЕЖИМ 2: С немецкого на русский (vom Deutschen ins Russische — всё наоборот)
+    // На лицевой стороне немецкое слово (и множественное число при наличии)
     if (cardData.plural && cardData.plural !== "-" && cardData.plural !== "—") {
       ruWord.innerHTML = `${cardData.front} <br><span class="plural-text" style="color: #e6f4ff;">pl: ${cardData.plural}</span>`;
     } else {
       ruWord.textContent = cardData.front;
     }
 
-    // Внутри русское слово
+    // На обратной стороне русский перевод слова
     deWord.textContent = cardData.back;
 
-    // Внутри русское предложение сверху, а снизу перевод на немецкий
+    // На обратной стороне русское предложение сверху, а снизу его немецкий оригинал
     if (cardData.subSentence) {
       sentence.innerHTML = `${cardData.sentence} <br><span style="font-size: 0.8em; opacity: 0.8;">${cardData.subSentence}</span>`;
     } else {
@@ -278,18 +316,19 @@ function updateCard(index) {
 }
 
 /**
- * Принудительная остановка озвучивания (с патчем стабильности для Firefox)
+ * Принудительная остановка синтезатора речи (включает патч стабильности для Firefox).
  */
 function stopSpeech() {
   isPlaying = false;
   if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel(); // Очищаем очередь воспроизведения
     try {
+      // Дополнительный сброс состояния для обхода бага зависания очереди в Firefox
       window.speechSynthesis.pause();
       window.speechSynthesis.resume();
       window.speechSynthesis.cancel();
     } catch (e) {
-      // Игнорируем возможные системные исключения
+      // Игнорируем возможные системные исключения браузера
     }
   }
 }
@@ -298,29 +337,31 @@ function stopSpeech() {
 // ОБРАБОТЧИК ОЗВУЧИВАНИЯ (🎵) С ИНВЕРСИЕЙ ЯЗЫКОВ
 // ==========================================
 playBtn.addEventListener("click", () => {
+  // Проверяем поддержку Web Speech API в браузере пользователя
   if (!("speechSynthesis" in window)) {
     alert("К сожалению, ваш браузер не поддерживает синтез речи.");
     return;
   }
 
+  // Если озвучка уже идет, повторный клик по кнопке останавливает её
   if (isPlaying) {
     stopSpeech();
     return;
   }
 
-  stopSpeech();
+  stopSpeech(); // На всякий случай сбрасываем предыдущие зависшие задачи
 
   if (currentCards.length === 0) return;
   const cardData = currentCards[currentIndex];
   isPlaying = true;
 
-  // Определяем тексты и языки озвучки в зависимости от режима
+  // Переменные для настройки текстов, языков и скорости речи
   let mainWordText, mainLang, mainRate;
   let mainSentenceText;
   let subSentenceText, subLang, subRate;
 
   if (currentDirection === "ru-de") {
-    // В режиме RU -> DE: основное слово и предложение на немецком, перевод на русском
+    // В режиме RU -> DE: основное слово и предложение на немецком (медленно), перевод на русском
     mainWordText = cardData.de;
     mainSentenceText = cardData.sentence;
     mainLang = "de-DE";
@@ -330,7 +371,7 @@ playBtn.addEventListener("click", () => {
     subLang = "ru-RU";
     subRate = 0.9;
   } else {
-    // В режиме DE -> RU: всё наоборот! Основное слово и предложение на русском, перевод на немецком
+    // В режиме DE -> RU: основное слово и предложение на русском, перевод на немецком (медленно)
     mainWordText = cardData.back;
     mainSentenceText = cardData.sentence;
     mainLang = "ru-RU";
@@ -341,27 +382,27 @@ playBtn.addEventListener("click", () => {
     subRate = 0.6;
   }
 
-  // 1. Первое прочтение основного слова
+  // 1. Создаем объект для первого прочтения основного слова
   const wordUtterance1 = new SpeechSynthesisUtterance(mainWordText);
   wordUtterance1.lang = mainLang;
   wordUtterance1.rate = mainRate;
 
-  // 2. Второе прочтение основного слова
+  // 2. Создаем объект для второго прочтения основного слова
   const wordUtterance2 = new SpeechSynthesisUtterance(mainWordText);
   wordUtterance2.lang = mainLang;
   wordUtterance2.rate = mainRate;
 
-  // 3. Первое прочтение основного предложения
+  // 3. Создаем объект для первого прочтения основного предложения
   const sentenceUtterance1 = new SpeechSynthesisUtterance(mainSentenceText);
   sentenceUtterance1.lang = mainLang;
   sentenceUtterance1.rate = mainRate;
 
-  // 4. Второе прочтение основного предложения
+  // 4. Создаем объект для второго прочтения основного предложения
   const sentenceUtterance2 = new SpeechSynthesisUtterance(mainSentenceText);
   sentenceUtterance2.lang = mainLang;
   sentenceUtterance2.rate = mainRate;
 
-  // 5. Перевод предложения на второй язык
+  // 5. Создаем объект для прочтения перевода предложения на втором языке (если перевод задан)
   let subUtterance = null;
   if (subSentenceText) {
     subUtterance = new SpeechSynthesisUtterance(subSentenceText);
@@ -369,9 +410,9 @@ playBtn.addEventListener("click", () => {
     subUtterance.rate = subRate;
   }
 
-  // Цепочка последовательного воспроизведения
+  // Выстраиваем цепочку последовательного воспроизведения с паузами (setTimeout)
   wordUtterance1.onend = () => {
-    if (!isPlaying) return;
+    if (!isPlaying) return; // Прерываем цепочку, если пользователь остановил звук
     setTimeout(() => {
       if (isPlaying) window.speechSynthesis.speak(wordUtterance2);
     }, 500);
@@ -399,16 +440,18 @@ playBtn.addEventListener("click", () => {
       }, 1000);
     };
 
+    // Сбрасываем флаг воспроизведения после завершения всей цепочки
     subUtterance.onend = () => {
       isPlaying = false;
     };
   } else {
+    // Если перевода предложения нет, завершаем цепочку после второго прочтения основного предложения
     sentenceUtterance2.onend = () => {
       isPlaying = false;
     };
   }
 
-  // Защита от сбоев
+  // Защита от сбоев: сбрасываем флаг воспроизведения при возникновении любой ошибки синтезатора
   wordUtterance1.onerror = () => {
     isPlaying = false;
   };
@@ -421,23 +464,33 @@ playBtn.addEventListener("click", () => {
   sentenceUtterance2.onerror = () => {
     isPlaying = false;
   };
+  if (subUtterance) {
+    subUtterance.onerror = () => {
+      isPlaying = false;
+    };
+  }
 
+  // Запускаем воспроизведение первого звена цепочки
   window.speechSynthesis.speak(wordUtterance1);
 });
 
-// --- Навигационные кнопки ---
+// --- Обработчики навигационных кнопок ---
+
+// Кнопка «Следующая» (циклический переход вперед)
 document.getElementById("nextBtn").addEventListener("click", () => {
   if (currentCards.length === 0) return;
   currentIndex = (currentIndex + 1) % currentCards.length;
   updateCard(currentIndex);
 });
 
+// Кнопка «Предыдущая» (циклический переход назад)
 document.getElementById("prevBtn").addEventListener("click", () => {
   if (currentCards.length === 0) return;
   currentIndex = (currentIndex - 1 + currentCards.length) % currentCards.length;
   updateCard(currentIndex);
 });
 
+// Кнопка «Рандом» (выбор случайной карточки, отличной от текущей)
 document.getElementById("randomBtn").addEventListener("click", () => {
   if (currentCards.length <= 1) return;
   let randomIndex;
@@ -449,7 +502,7 @@ document.getElementById("randomBtn").addEventListener("click", () => {
   updateCard(currentIndex);
 });
 
-// --- Переключение уровней сложности ---
+// --- Переключение уровней сложности (A1-A2, B1-B2, C1-C2) ---
 menuButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     const selectedLevel = btn.getAttribute("data-level");
@@ -459,7 +512,7 @@ menuButtons.forEach((btn) => {
   });
 });
 
-// --- Переключение направления перевода (vom Russischen ins Deutsche / vom Deutschen ins Russische) ---
+// --- Переключение направления перевода (ru-de / de-ru) ---
 dirButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     const selectedDir = btn.getAttribute("data-dir");
@@ -470,5 +523,5 @@ dirButtons.forEach((btn) => {
   });
 });
 
-// --- Запуск приложения ---
+// --- Точка входа: запуск приложения ---
 initApp();
