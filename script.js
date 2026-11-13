@@ -3,11 +3,13 @@
 // ==========================================
 
 // --- Глобальные переменные состояния ---
-let db = {}; // Полная база данных приложения
-let levelCards = []; // Все карточки выбранного уровня (до фильтрации по топикам)
-let currentCards = []; // Отфильтрованный массив карточек, с которым работает пользователь
-let currentIndex = 0; // Индекс активной отображаемой карточки
-let currentLevelKey = "a1a2"; // Текущий выбранный уровень сложности (по умолчанию A1-A2)
+let db = {}; // Полная база данных (содержит оба направления)
+let levelCards = []; // Все карточки выбранного уровня и режима
+let currentCards = []; // Отфильтрованный массив карточек для показа
+let currentIndex = 0; // Индекс активной карточки
+let currentLevelKey = "a1a2"; // Текущий уровень ('a1a2', 'b1b2', 'c1c2')
+let currentDirection = "ru-de"; // Направление перевода: 'ru-de' или 'de-ru'
+let isPlaying = false; // Флаг воспроизведения (защита от наложения в Firefox)
 
 // --- Ссылки на элементы интерфейса (DOM-элементы) ---
 const ruWord = document.getElementById("ru-word");
@@ -16,6 +18,7 @@ const sentence = document.getElementById("sentence");
 const playBtn = document.getElementById("play-sound");
 const cardTopic = document.getElementById("card-topic");
 const menuButtons = document.querySelectorAll(".menuBtn");
+const dirButtons = document.querySelectorAll(".dirBtn");
 
 // Элементы выпадающего меню топиков
 const dropdownContainer = document.getElementById("dropdown-container");
@@ -24,26 +27,37 @@ const dropdownBtnText = document.getElementById("dropdown-btn-text");
 const topicsList = document.getElementById("topics-list");
 
 /**
- * Функция инициализации приложения.
- * Собирает базу данных из раздельных файлов уровней и проверяет localStorage.
+ * Инициализация приложения.
+ * Собирает данные из 6 файлов (3 для ru-de и 3 для de-ru) и синхронизирует с localStorage.
  */
 function initApp() {
-  // Формируем единый объект базы данных из трех отдельных переменных
   const assembledDatabase = {
-    a1a2: typeof databaseA1A2 !== "undefined" ? databaseA1A2 : [],
-    b1b2: typeof databaseB1B2 !== "undefined" ? databaseB1B2 : [],
-    c1c2: typeof databaseC1C2 !== "undefined" ? databaseC1C2 : [],
+    "ru-de": {
+      a1a2: typeof databaseA1A2 !== "undefined" ? databaseA1A2 : [],
+      b1b2: typeof databaseB1B2 !== "undefined" ? databaseB1B2 : [],
+      c1c2: typeof databaseC1C2 !== "undefined" ? databaseC1C2 : [],
+    },
+    "de-ru": {
+      a1a2: typeof databaseA1A2_ru !== "undefined" ? databaseA1A2_ru : [],
+      b1b2: typeof databaseB1B2_ru !== "undefined" ? databaseB1B2_ru : [],
+      c1c2: typeof databaseC1C2_ru !== "undefined" ? databaseC1C2_ru : [],
+    },
   };
 
-  const cachedData = localStorage.getItem("flashcards_db");
+  const cachedData = localStorage.getItem("flashcards_db_v2");
   const fileDataString = JSON.stringify(assembledDatabase);
 
-  if (assembledDatabase.a1a2.length > 0 || assembledDatabase.b1b2.length > 0) {
+  // Проверяем, загрузились ли массивы из файлов
+  const hasData =
+    assembledDatabase["ru-de"].a1a2.length > 0 ||
+    assembledDatabase["de-ru"].a1a2.length > 0;
+
+  if (hasData) {
     if (cachedData !== fileDataString) {
       console.log(
-        "Обновление: файлы баз данных были изменены. Обновляем localStorage...",
+        "Обновление: файлы баз данных изменены. Обновляем localStorage...",
       );
-      localStorage.setItem("flashcards_db", fileDataString);
+      localStorage.setItem("flashcards_db_v2", fileDataString);
       db = assembledDatabase;
     } else {
       console.log("Данные актуальны, загружаем из кэша localStorage.");
@@ -53,26 +67,39 @@ function initApp() {
     db = JSON.parse(cachedData);
   } else {
     db = {
-      a1a2: [
-        {
-          topic: "Ошибка",
-          ru: "Ошибка",
-          de: "der Fehler",
-          plural: "-",
-          sentence: "База данных не найдена.",
-          ruSentence: "Файлы уровней не подключены.",
-        },
-      ],
+      "ru-de": {
+        a1a2: [
+          {
+            topic: "Ошибка",
+            ru: "Ошибка",
+            de: "der Fehler",
+            plural: "-",
+            sentence: "Файлы баз не найдены.",
+            ruSentence: "",
+          },
+        ],
+      },
+      "de-ru": {
+        a1a2: [
+          {
+            topic: "Fehler",
+            front: "der Fehler",
+            back: "Ошибка",
+            plural: "-",
+            sentence: "Файлы баз не найдены.",
+            subSentence: "",
+          },
+        ],
+      },
     };
   }
 
-  // Настройка открытия/закрытия выпадающего меню по клику на кнопку
+  // Настройка открытия/закрытия выпадающего меню топиков
   dropdownToggle.addEventListener("click", (e) => {
     e.stopPropagation();
     dropdownContainer.classList.toggle("open");
   });
 
-  // Закрытие меню при клике в любое другое место на странице
   document.addEventListener("click", () => {
     dropdownContainer.classList.remove("open");
   });
@@ -81,29 +108,32 @@ function initApp() {
     e.stopPropagation();
   });
 
+  // Загружаем стартовый уровень и направление
   loadLevel(currentLevelKey);
 }
 
 /**
- * Загружает данные для указанного уровня сложности, строит список топиков и выводит первую карточку
+ * Загружает карточки для текущего направления перевода и уровня сложности
  * @param {string} levelKey - Ключ уровня ('a1a2', 'b1b2', 'c1c2')
  */
 function loadLevel(levelKey) {
   currentLevelKey = levelKey;
-  levelCards = db[currentLevelKey] || [];
+  const dirData = db[currentDirection] || {};
+  levelCards = dirData[currentLevelKey] || [];
   currentCards = [...levelCards];
   currentIndex = 0;
 
   dropdownContainer.classList.remove("open");
 
   updateActiveMenuButton(currentLevelKey);
+  updateActiveDirectionButton(currentDirection);
   renderTopicsForLevel(levelCards);
   updateDropdownButtonText();
   updateCard(currentIndex);
 }
 
 /**
- * Извлекает уникальные топики из карточек уровня и создает для них чекбоксы в выпадающем меню
+ * Создает список чекбоксов с уникальными топиками текущего уровня
  * @param {Array} cards - Массив карточек текущего уровня
  */
 function renderTopicsForLevel(cards) {
@@ -142,7 +172,7 @@ function renderTopicsForLevel(cards) {
 }
 
 /**
- * Фильтрует карточки текущего уровня на основе отмеченных чекбоксов топиков
+ * Фильтрует карточки по выбранным чекбоксам топиков
  */
 function applyTopicFilter() {
   const checkedBoxes = topicsList.querySelectorAll(
@@ -164,36 +194,45 @@ function applyTopicFilter() {
 }
 
 /**
- * Обновляет текст на кнопке выпадающего меню
+ * Обновляет текст на кнопке выпадающего списка в зависимости от режима языка
  */
 function updateDropdownButtonText() {
-  dropdownBtnText.textContent = `Темы уровня (${currentCards.length})`;
+  const label = currentDirection === "de-ru" ? "Themen" : "Темы уровня";
+  dropdownBtnText.textContent = `${label} (${currentCards.length})`;
 }
 
 /**
- * Функция обновления подсветки кнопок в меню уровней
- * @param {string} activeLevel - Ключ активного уровня ('a1a2', 'b1b2', 'c1c2')
+ * Подсвечивает активную кнопку уровня (A1-A2, B1-B2, C1-C2)
  */
 function updateActiveMenuButton(activeLevel) {
   menuButtons.forEach((btn) => {
-    const levelAttr = btn.getAttribute("data-level");
-    if (levelAttr === activeLevel) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
+    btn.classList.toggle(
+      "active",
+      btn.getAttribute("data-level") === activeLevel,
+    );
   });
 }
 
 /**
- * Функция обновления содержимого карточки на экране по заданному индексу
+ * Подсвечивает активную кнопку направления перевода слева от карточки
+ */
+function updateActiveDirectionButton(activeDir) {
+  dirButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.getAttribute("data-dir") === activeDir);
+  });
+}
+
+/**
+ * Отрисовывает содержимое карточки на экране в зависимости от выбранного режима
  * @param {number} index - Индекс карточки в массиве currentCards
  */
 function updateCard(index) {
-  if (!currentCards || currentCards.length === 0) return;
+  stopSpeech();
 
+  if (!currentCards || currentCards.length === 0) return;
   const cardData = currentCards[index];
 
+  // Отображение топика
   if (cardData.topic && cardData.topic.trim() !== "") {
     cardTopic.textContent = cardData.topic;
     cardTopic.style.display = "inline-block";
@@ -202,34 +241,61 @@ function updateCard(index) {
     cardTopic.style.display = "none";
   }
 
-  ruWord.textContent = cardData.ru;
+  if (currentDirection === "ru-de") {
+    // РЕЖИМ 1: vom Russischen ins Deutsche
+    ruWord.textContent = cardData.ru;
 
-  if (cardData.plural && cardData.plural !== "-") {
-    deWord.innerHTML = `${cardData.de} <br><span class="plural-text">pl: ${cardData.plural}</span>`;
+    if (cardData.plural && cardData.plural !== "-" && cardData.plural !== "—") {
+      deWord.innerHTML = `${cardData.de} <br><span class="plural-text">pl: ${cardData.plural}</span>`;
+    } else {
+      deWord.innerHTML = cardData.de;
+    }
+
+    if (cardData.ruSentence) {
+      sentence.innerHTML = `${cardData.sentence} <br><span style="font-size: 0.8em; opacity: 0.8;">${cardData.ruSentence}</span>`;
+    } else {
+      sentence.textContent = cardData.sentence;
+    }
   } else {
-    deWord.innerHTML = cardData.de;
-  }
+    // РЕЖИМ 2: vom Deutschen ins Russische (всё наоборот)
+    // Снаружи немецкое слово (и при наличии форма множественного числа)
+    if (cardData.plural && cardData.plural !== "-" && cardData.plural !== "—") {
+      ruWord.innerHTML = `${cardData.front} <br><span class="plural-text" style="color: #e6f4ff;">pl: ${cardData.plural}</span>`;
+    } else {
+      ruWord.textContent = cardData.front;
+    }
 
-  if (cardData.ruSentence) {
-    sentence.innerHTML = `${cardData.sentence} <br><span style="font-size: 0.8em; opacity: 0.8;">${cardData.ruSentence}</span>`;
-  } else {
-    sentence.textContent = cardData.sentence;
-  }
+    // Внутри русское слово
+    deWord.textContent = cardData.back;
 
-  stopSpeech();
+    // Внутри русское предложение сверху, а снизу перевод на немецкий
+    if (cardData.subSentence) {
+      sentence.innerHTML = `${cardData.sentence} <br><span style="font-size: 0.8em; opacity: 0.8;">${cardData.subSentence}</span>`;
+    } else {
+      sentence.textContent = cardData.sentence;
+    }
+  }
 }
 
 /**
- * Функция принудительной остановки синтеза речи браузера
+ * Принудительная остановка озвучивания (с патчем стабильности для Firefox)
  */
 function stopSpeech() {
+  isPlaying = false;
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+      window.speechSynthesis.cancel();
+    } catch (e) {
+      // Игнорируем возможные системные исключения
+    }
   }
 }
 
 // ==========================================
-// ОБРАБОТЧИК КЛИКА ПО КНОПКЕ ОЗВУЧИВАНИЯ (🎵)
+// ОБРАБОТЧИК ОЗВУЧИВАНИЯ (🎵) С ИНВЕРСИЕЙ ЯЗЫКОВ
 // ==========================================
 playBtn.addEventListener("click", () => {
   if (!("speechSynthesis" in window)) {
@@ -237,64 +303,129 @@ playBtn.addEventListener("click", () => {
     return;
   }
 
+  if (isPlaying) {
+    stopSpeech();
+    return;
+  }
+
   stopSpeech();
 
   if (currentCards.length === 0) return;
   const cardData = currentCards[currentIndex];
+  isPlaying = true;
 
-  const wordUtterance1 = new SpeechSynthesisUtterance(cardData.de);
-  wordUtterance1.lang = "de-DE";
-  wordUtterance1.rate = 0.5;
+  // Определяем тексты и языки озвучки в зависимости от режима
+  let mainWordText, mainLang, mainRate;
+  let mainSentenceText;
+  let subSentenceText, subLang, subRate;
 
-  const wordUtterance2 = new SpeechSynthesisUtterance(cardData.de);
-  wordUtterance2.lang = "de-DE";
-  wordUtterance2.rate = 0.5;
+  if (currentDirection === "ru-de") {
+    // В режиме RU -> DE: основное слово и предложение на немецком, перевод на русском
+    mainWordText = cardData.de;
+    mainSentenceText = cardData.sentence;
+    mainLang = "de-DE";
+    mainRate = 0.5;
 
-  const sentenceUtterance1 = new SpeechSynthesisUtterance(cardData.sentence);
-  sentenceUtterance1.lang = "de-DE";
-  sentenceUtterance1.rate = 0.5;
+    subSentenceText = cardData.ruSentence;
+    subLang = "ru-RU";
+    subRate = 0.9;
+  } else {
+    // В режиме DE -> RU: всё наоборот! Основное слово и предложение на русском, перевод на немецком
+    mainWordText = cardData.back;
+    mainSentenceText = cardData.sentence;
+    mainLang = "ru-RU";
+    mainRate = 0.9;
 
-  const sentenceUtterance2 = new SpeechSynthesisUtterance(cardData.sentence);
-  sentenceUtterance2.lang = "de-DE";
-  sentenceUtterance2.rate = 0.5;
-
-  let ruUtterance = null;
-  if (cardData.ruSentence) {
-    ruUtterance = new SpeechSynthesisUtterance(cardData.ruSentence);
-    ruUtterance.lang = "ru-RU";
-    ruUtterance.rate = 0.9;
+    subSentenceText = cardData.subSentence;
+    subLang = "de-DE";
+    subRate = 0.6;
   }
 
+  // 1. Первое прочтение основного слова
+  const wordUtterance1 = new SpeechSynthesisUtterance(mainWordText);
+  wordUtterance1.lang = mainLang;
+  wordUtterance1.rate = mainRate;
+
+  // 2. Второе прочтение основного слова
+  const wordUtterance2 = new SpeechSynthesisUtterance(mainWordText);
+  wordUtterance2.lang = mainLang;
+  wordUtterance2.rate = mainRate;
+
+  // 3. Первое прочтение основного предложения
+  const sentenceUtterance1 = new SpeechSynthesisUtterance(mainSentenceText);
+  sentenceUtterance1.lang = mainLang;
+  sentenceUtterance1.rate = mainRate;
+
+  // 4. Второе прочтение основного предложения
+  const sentenceUtterance2 = new SpeechSynthesisUtterance(mainSentenceText);
+  sentenceUtterance2.lang = mainLang;
+  sentenceUtterance2.rate = mainRate;
+
+  // 5. Перевод предложения на второй язык
+  let subUtterance = null;
+  if (subSentenceText) {
+    subUtterance = new SpeechSynthesisUtterance(subSentenceText);
+    subUtterance.lang = subLang;
+    subUtterance.rate = subRate;
+  }
+
+  // Цепочка последовательного воспроизведения
   wordUtterance1.onend = () => {
+    if (!isPlaying) return;
     setTimeout(() => {
-      window.speechSynthesis.speak(wordUtterance2);
+      if (isPlaying) window.speechSynthesis.speak(wordUtterance2);
     }, 500);
   };
 
   wordUtterance2.onend = () => {
+    if (!isPlaying) return;
     setTimeout(() => {
-      window.speechSynthesis.speak(sentenceUtterance1);
+      if (isPlaying) window.speechSynthesis.speak(sentenceUtterance1);
     }, 500);
   };
 
   sentenceUtterance1.onend = () => {
+    if (!isPlaying) return;
     setTimeout(() => {
-      window.speechSynthesis.speak(sentenceUtterance2);
+      if (isPlaying) window.speechSynthesis.speak(sentenceUtterance2);
     }, 200);
   };
 
-  if (ruUtterance) {
+  if (subUtterance) {
     sentenceUtterance2.onend = () => {
+      if (!isPlaying) return;
       setTimeout(() => {
-        window.speechSynthesis.speak(ruUtterance);
+        if (isPlaying) window.speechSynthesis.speak(subUtterance);
       }, 1000);
     };
+
+    subUtterance.onend = () => {
+      isPlaying = false;
+    };
+  } else {
+    sentenceUtterance2.onend = () => {
+      isPlaying = false;
+    };
   }
+
+  // Защита от сбоев
+  wordUtterance1.onerror = () => {
+    isPlaying = false;
+  };
+  wordUtterance2.onerror = () => {
+    isPlaying = false;
+  };
+  sentenceUtterance1.onerror = () => {
+    isPlaying = false;
+  };
+  sentenceUtterance2.onerror = () => {
+    isPlaying = false;
+  };
 
   window.speechSynthesis.speak(wordUtterance1);
 });
 
-// Навигация
+// --- Навигационные кнопки ---
 document.getElementById("nextBtn").addEventListener("click", () => {
   if (currentCards.length === 0) return;
   currentIndex = (currentIndex + 1) % currentCards.length;
@@ -318,18 +449,26 @@ document.getElementById("randomBtn").addEventListener("click", () => {
   updateCard(currentIndex);
 });
 
-// Переключение уровней
+// --- Переключение уровней сложности ---
 menuButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     const selectedLevel = btn.getAttribute("data-level");
-    if (db[selectedLevel]) {
+    if (db[currentDirection] && db[currentDirection][selectedLevel]) {
       loadLevel(selectedLevel);
     }
   });
 });
 
-document.querySelector(".card").addEventListener("mouseleave", () => {
-  stopSpeech();
+// --- Переключение направления перевода (vom Russischen ins Deutsche / vom Deutschen ins Russische) ---
+dirButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const selectedDir = btn.getAttribute("data-dir");
+    if (selectedDir !== currentDirection) {
+      currentDirection = selectedDir;
+      loadLevel(currentLevelKey);
+    }
+  });
 });
 
+// --- Запуск приложения ---
 initApp();

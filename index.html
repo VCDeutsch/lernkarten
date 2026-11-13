@@ -31,25 +31,35 @@
 
   <div class="main">
     <div class="divmain">
-      <!-- Сцена с карточкой и кнопками управления -->
-      <div class="scene">
-        <div class="card">
-          <div class="card-inner">
-            <!-- Лицевая -->
-            <div class="card-face card-front">
-              <!-- Тема карточки (отображается над словом) -->
-              <div class="card-topic" id="card-topic"></div>
-              <div class="content">
-                <div class="title-ru" id="ru-word">Мама</div>
+      <!-- Центральная рабочая область -->
+      <div class="center-column">
+        
+        <!-- Горизонтальные кнопки выбора направления перевода (наверху по центру) -->
+        <div class="direction-sidebar">
+          <button class="dirBtn active" data-dir="ru-de">vom Russischen ins Deutsche</button>
+          <button class="dirBtn" data-dir="de-ru">vom Deutschen ins Russische</button>
+        </div>
+
+        <!-- Сцена с карточкой -->
+        <div class="scene">
+          <div class="card">
+            <div class="card-inner">
+              <!-- Лицевая сторона -->
+              <div class="card-face card-front">
+                <!-- Тема карточки (отображается над словом) -->
+                <div class="card-topic" id="card-topic"></div>
+                <div class="content">
+                  <div class="title-ru" id="ru-word">Мама</div>
+                </div>
               </div>
-            </div>
-            <!-- Обратная -->
-            <div class="card-face card-back">
-              <div class="content">
-                <div class="title-de" id="de-word">die Mutter</div>
-                <hr>
-                <p class="sentence" id="sentence">Die Mutter hat den Rahmen gewaschen.</p>
-                <button id="play-sound">🎵</button>
+              <!-- Обратная сторона -->
+              <div class="card-face card-back">
+                <div class="content">
+                  <div class="title-de" id="de-word">die Mutter</div>
+                  <hr>
+                  <p class="sentence" id="sentence">Die Mutter hat den Rahmen gewaschen.</p>
+                  <button id="play-sound">🎵</button>
+                </div>
               </div>
             </div>
           </div>
@@ -61,16 +71,22 @@
           <button id="nextBtn">Следующая</button>
           <button id="randomBtn">Рандом</button>
         </div>
+
       </div>
     </div>
   </div>
   
-  <!-- Подключаем файлы с базами данных по уровням -->
+  <!-- Подключаем файлы с базами данных (Русский -> Немецкий) -->
   <script src="a1a2.js"></script>
   <script src="b1b2.js"></script>
   <script src="c1c2.js"></script>
+
+  <!-- Подключаем файлы с базами данных (Немецкий -> Русский) -->
+  <script src="a1a2_ru.js"></script>
+  <script src="b1b2_ru.js"></script>
+  <script src="c1c2_ru.js"></script>
   
-  <!-- Затем основную логику приложения -->
+  <!-- Основная логика приложения -->
   <script src="script.js"></script>
 </body>
 
