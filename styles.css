@@ -167,6 +167,7 @@ body {
 
 /* Центральная колонка (все элементы строго по центру друг под другом) */
 .center-column {
+  margin-top: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
