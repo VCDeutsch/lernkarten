@@ -369,17 +369,17 @@ playBtn.addEventListener("click", () => {
 
     subSentenceText = cardData.ruSentence;
     subLang = "ru-RU";
-    subRate = 0.9;
+    subRate = 0.5;
   } else {
     // В режиме DE -> RU: основное слово и предложение на русском, перевод на немецком (медленно)
     mainWordText = cardData.back;
     mainSentenceText = cardData.sentence;
     mainLang = "ru-RU";
-    mainRate = 0.9;
+    mainRate = 0.5;
 
     subSentenceText = cardData.subSentence;
     subLang = "de-DE";
-    subRate = 0.6;
+    subRate = 0.5;
   }
 
   // 1. Создаем объект для первого прочтения основного слова
