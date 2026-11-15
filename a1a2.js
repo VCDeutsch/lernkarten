@@ -549,7 +549,7 @@ const databaseA1A2 = [
   // Топик: Zustimmen
   // ----------------------------------------------------
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "Да или конечно",
     de: "Ja oder Jawohl.",
     plural: "",
@@ -557,7 +557,7 @@ const databaseA1A2 = [
     ruSentence: "Да, конечно.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "конечно, несомненно",
     de: "Gewiss. Sicher. Bestimmt.",
     plural: "",
@@ -565,7 +565,7 @@ const databaseA1A2 = [
     ruSentence: "Конечно, мы это сделаем.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "наверняка, обязательно",
     de: "Sicher. Bestimmt.",
     plural: "",
@@ -573,7 +573,7 @@ const databaseA1A2 = [
     ruSentence: "Я обязательно с этим справлюсь.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "хорошо, само собой разумеется",
     de: "Gut. Selbstverständlich.",
     plural: "",
@@ -581,7 +581,7 @@ const databaseA1A2 = [
     ruSentence: "Хорошо, само собой разумеется, я тебе помогу.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "конечно",
     de: "Natürlich.",
     plural: "",
@@ -589,7 +589,7 @@ const databaseA1A2 = [
     ruSentence: "Конечно, это не проблема.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "охотно, с удовольствием",
     de: "Gern. Sehr gern.",
     plural: "",
@@ -597,7 +597,7 @@ const databaseA1A2 = [
     ruSentence: "Я делаю это с большим удовольствием.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "конечно, ну да, конечно",
     de: "Freilich. Aber ja, freilich.",
     plural: "",
@@ -605,7 +605,7 @@ const databaseA1A2 = [
     ruSentence: "Конечно, ты прав.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "надеюсь, да",
     de: "Ich glaube, ja.",
     plural: "",
@@ -613,7 +613,7 @@ const databaseA1A2 = [
     ruSentence: "Он придет сегодня? — Я надеюсь, да.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "возможно",
     de: "Vielleicht.",
     plural: "",
@@ -621,7 +621,7 @@ const databaseA1A2 = [
     ruSentence: "Возможно, мы сделаем это завтра.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "согласен",
     de: "Ich bin einverstanden.",
     plural: "",
@@ -629,7 +629,7 @@ const databaseA1A2 = [
     ruSentence: "Я согласен с этим предложением.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "идет! / ладно!",
     de: "Es gilt!",
     plural: "",
@@ -637,7 +637,7 @@ const databaseA1A2 = [
     ruSentence: "Мы сделаем это так. — Идет!",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "отлично",
     de: "Ausgezeichnet.",
     plural: "",
@@ -645,7 +645,7 @@ const databaseA1A2 = [
     ruSentence: "Еда на вкус отличная.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "я понимаю",
     de: "Ich verstehe.",
     plural: "",
@@ -653,7 +653,7 @@ const databaseA1A2 = [
     ruSentence: "Да, я понимаю эту проблему.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "это мне подходит",
     de: "Das passt mir. / Das kommt mir recht.",
     plural: "",
@@ -661,7 +661,7 @@ const databaseA1A2 = [
     ruSentence: "Это время мне подходит.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "вы правы",
     de: "Sie haben Recht.",
     plural: "",
@@ -669,7 +669,7 @@ const databaseA1A2 = [
     ruSentence: "Тут вы абсолютно правы.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "все в порядке",
     de: "Das ist in Ordnung.",
     plural: "",
@@ -677,7 +677,7 @@ const databaseA1A2 = [
     ruSentence: "Спасибо, для меня это в порядке.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "сразу, немедленно, без церемоний",
     de: "Ohne weiteres.",
     plural: "",
@@ -685,7 +685,7 @@ const databaseA1A2 = [
     ruSentence: "Это можно сделать без всяких церемоний.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "с удовольствием",
     de: "Mit Vergnügen.",
     plural: "",
@@ -693,7 +693,7 @@ const databaseA1A2 = [
     ruSentence: "Я помогу вам с удовольствием.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "верно",
     de: "Richtig.",
     plural: "",
@@ -701,7 +701,7 @@ const databaseA1A2 = [
     ruSentence: "Это абсолютно верно.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "действительно",
     de: "Wirklich.",
     plural: "",
@@ -709,7 +709,7 @@ const databaseA1A2 = [
     ruSentence: "Это действительно отличная идея.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "это хорошая идея",
     de: "Das ist eine gute Idee.",
     plural: "",
@@ -717,7 +717,7 @@ const databaseA1A2 = [
     ruSentence: "Пойти в кино — это хорошая идея.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "несомненно",
     de: "Das steht fest.",
     plural: "",
@@ -725,7 +725,7 @@ const databaseA1A2 = [
     ruSentence: "Наш план несомненно утвержден.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "это само собой разумеется",
     de: "Es versteht sich von selbst.",
     plural: "",
@@ -733,7 +733,7 @@ const databaseA1A2 = [
     ruSentence: "То, что я тебе помогаю, само собой разумеется.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "я надеюсь",
     de: "Ich hoffe. Ich glaube.",
     plural: "",
@@ -741,7 +741,7 @@ const databaseA1A2 = [
     ruSentence: "Я надеюсь, все получится.",
   },
   {
-    topic: "Согласиться",
+    topic: "согласиться",
     ru: "я полностью согласен",
     de: "Ich bin vollkommen einverstanden.",
     plural: "",
