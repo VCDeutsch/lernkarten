@@ -14,12 +14,13 @@
     <button class="menuBtn" data-level="a1a2">A1-A2</button>
     <button class="menuBtn" data-level="b1b2">B1-B2</button>
     <button class="menuBtn" data-level="c1c2">C1-C2</button>
+    <button class="menuBtn" data-level="difficult">Сложные слова</button>
   </div>
 
   <!-- Выпадающее меню топиков -->
   <div class="dropdown-container" id="dropdown-container" style="display: none;">
     <button class="dropdown-toggle" id="dropdown-toggle">
-      <span id="dropdown-btn-text">Темы уровня</span> 
+      <span id="dropdown-btn-text">Темы уровня</span>
       <span class="dropdown-arrow">▼</span>
     </button>
     <div class="dropdown-menu" id="dropdown-menu">
@@ -33,7 +34,7 @@
     <div class="divmain">
       <!-- Центральная рабочая область -->
       <div class="center-column">
-        
+
         <!-- Горизонтальные кнопки выбора направления перевода (наверху по центру) -->
         <div class="direction-sidebar">
           <button class="dirBtn active" data-dir="ru-de">vom Russischen ins Deutsche</button>
@@ -58,7 +59,15 @@
                   <div class="title-de" id="de-word">die Mutter</div>
                   <hr>
                   <p class="sentence" id="sentence">Die Mutter hat den Rahmen gewaschen.</p>
-                  <button id="play-sound">🎵</button>
+
+                  <!-- Панель управления на обороте: аудио + чекбокс сложных слов -->
+                  <div class="back-controls">
+                    <button id="play-sound">🎵</button>
+                    <label class="difficult-label">
+                      <input type="checkbox" id="difficult-checkbox"> сложные слова
+                    </label>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -75,7 +84,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Подключаем файлы с базами данных (Русский -> Немецкий) -->
   <script src="a1a2.js"></script>
   <script src="b1b2.js"></script>
@@ -85,7 +94,7 @@
   <script src="a1a2_ru.js"></script>
   <script src="b1b2_ru.js"></script>
   <script src="c1c2_ru.js"></script>
-  
+
   <!-- Основная логика приложения -->
   <script src="script.js"></script>
 </body>
