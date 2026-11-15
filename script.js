@@ -259,6 +259,25 @@ function updateActiveDirectionButton(activeDir) {
 }
 
 /**
+ * Автоматически озвучивает текст лицевой стороны карточки ровно один раз.
+ * @param {string} text - Текст для озвучивания
+ */
+function speakFrontCard(text) {
+  if (!("speechSynthesis" in window)) return;
+
+  stopSpeech(); // Сбрасываем предыдущую озвучку
+
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  // Определяем язык: если в тексте есть латинские буквы, читаем по-немецки, иначе по-русски
+  const isGerman = /[a-zA-ZäöüßÄÖÜ]/.test(text);
+  utterance.lang = isGerman ? "de-DE" : "ru-RU";
+  utterance.rate = 0.6; // Комфортная скорость воспроизведения
+
+  window.speechSynthesis.speak(utterance);
+}
+
+/**
  * Отрисовывает содержимое карточки на экране в зависимости от выбранного режима перевода.
  * @param {number} index - Индекс карточки в массиве currentCards
  */
@@ -277,9 +296,12 @@ function updateCard(index) {
     cardTopic.style.display = "none";
   }
 
+  let textToSpeak = ""; // Текст для автоозвучки лицевой стороны
+
   if (currentDirection === "ru-de") {
     // РЕЖИМ 1: С русского на немецкий (vom Russischen ins Deutsche)
     ruWord.textContent = cardData.ru;
+    textToSpeak = cardData.ru; // Лицевая сторона — на русском
 
     // Если указано множественное число, выводим его под основным немецким словом
     if (cardData.plural && cardData.plural !== "-" && cardData.plural !== "—") {
@@ -302,6 +324,7 @@ function updateCard(index) {
     } else {
       ruWord.textContent = cardData.front;
     }
+    textToSpeak = cardData.front; // Лицевая сторона — на немецком
 
     // На обратной стороне русский перевод слова
     deWord.textContent = cardData.back;
@@ -313,6 +336,11 @@ function updateCard(index) {
       sentence.textContent = cardData.sentence;
     }
   }
+
+  // Озвучиваем лицевую сторону карточки ровно один раз с небольшой задержкой для стабильности
+  setTimeout(() => {
+    speakFrontCard(textToSpeak);
+  }, 150);
 }
 
 /**
